@@ -262,4 +262,31 @@ Torus::Torus() : RenderShape() {
   // - not supplied
 }
 
-
+// circles tracing out a circle
+// r0 radius of donut hole
+// r1 radius of donut size 
+// n1 frequency of circles on 
+void Torus::reshape(GLfloat r0, GLfloat r1, GLushort n1, GLushort n2) {
+	d_vertex.clear();
+	d_index.clear();
+	int N = n1 * n2;
+	for (int i = 0; i < n1; i++) {
+		for (int j = 0; j < n2; j++) {
+			GLfloat alpha = i*glm::pi<float>() / n2;
+			GLfloat beta = j*glm::pi<float>() / n1;
+			GLfloat x = (r0 + r1*glm::cos(alpha))*glm::cos(beta);
+			GLfloat y = (r0 + r1*glm::cos(alpha))*glm::sin(beta);
+			GLfloat z = (r1*glm::sin(alpha));
+			d_vertex.insert(d_vertex.cend(), { x, y, z });
+			GLushort last = (i + j - 1) % N;
+			GLushort next = (i + j + 1) % N;
+			d_index.insert(d_index.cend(), { last, GLushort(i + j), next });
+		}
+	}
+#define JOEDEBUG
+#ifdef JOEDEBUG
+	for (int i = 0; i < getNPoints() / 3; ++i) {
+		std::cerr << glm::to_string(getVertex(i)) << std::endl;
+	}
+#endif
+}

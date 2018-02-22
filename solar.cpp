@@ -190,11 +190,17 @@ void init(void)
 	g_color_loc = glGetUniformLocation( program, "objColor");	
   errorOut();
 
-	//---------------------------------------------------------
+//---------------------------------------------------------
   // Make the spheres nicer
+	// Warning: Number of points exponential? 
+	// Raise recursion level beyond 5 at own risk.
   for (int i = 0; i < 3; ++i) {
 	  g_sphereShape.subdivide();
   }
+
+  // Make a funky torus
+  g_torusShape.reshape(2.0f, 0.5f, 25, 25);
+
   // -------------------------------------------------------------
 	// Generate a VAO for the sphere
   glGenVertexArrays(1, &g_sphere_vao );

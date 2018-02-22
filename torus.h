@@ -25,16 +25,20 @@
 // ==========================================================================
 #ifndef CSI4130_TORUS_H_
 #define CSI4130_TORUS_H_
-
+#define GLM_ENABLE_EXPERIMENTAL
 // gl types
 #include <GL/glew.h>
 // glm types
 #include <glm/glm.hpp>
-
+#include <glm/gtc/constants.hpp>
+#include <glm/gtx/string_cast.hpp>
+#include <glm/gtc/integer.hpp> // for modulo?
 #include "render_shape.h"
+#include <iostream>
 
 class Torus : public RenderShape {
  public:
   Torus();
+  void reshape(GLfloat ro, GLfloat ri, GLushort ni, GLushort no);
 };
 #endif
