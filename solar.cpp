@@ -255,10 +255,12 @@ void init(void)
   errorOut();
   glBindBuffer(GL_ARRAY_BUFFER, vbo );
   glBufferData(GL_ARRAY_BUFFER,
-	       sizeof(GLfloat) * 3 * g_torusShape.getNPoints(),
+	       sizeof(GLfloat) * g_torusShape.getNPoints(),
 							 g_torusShape.getVertices(), GL_STATIC_DRAW);
+  errorOut();
   // pointer into the array of vertices which is now in the VAO
   glVertexAttribPointer(locPos, 3, GL_FLOAT, GL_FALSE, 0, 0 );
+  errorOut();
   glEnableVertexAttribArray(locPos);
   errorOut();
 

@@ -287,7 +287,6 @@ void Torus::reshape(GLfloat r_o, GLfloat r_i, GLushort n_o, GLushort n_i) {
 
                 }
         }
-#define JOEDEBUG
 #ifdef JOEDEBUG
         for (int i = 0; i < getNPoints() / 3; ++i) {
                 std::cerr << glm::to_string(getVertex(i)) << std::endl;
