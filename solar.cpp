@@ -1,7 +1,7 @@
 // ==========================================================================
 // $Id: solar.cpp,v 1.8 2018/02/17 03:21:06 jlang Exp $
 // Solar example for hierachical modeling
-// 
+//
 // Code inspired by the OpenGL programming guide by Shreiner et al.
 // ==========================================================================
 // (C)opyright:
@@ -72,6 +72,10 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 
+#ifndef _WIN32
+#define JOELAPTOP
+#endif
+
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
@@ -80,8 +84,12 @@
 #include <stack>
 #include <iostream>
 #include <GL/glew.h>
-#include <GL/glut.h>
 
+#ifdef JOELAPTOP
+#include <GL/freeglut.h>
+#else
+#include <GL/glut.h>
+#endif
 
 // glm types
 #define GLM_FORCE_RADIANS
@@ -119,7 +127,7 @@ struct WindowSize {
 		 d_widthPixel(512), d_width(12.5f),
 		 d_heightPixel(512), d_height(12.5f)
   {}
-}; 
+};
 
 /*
  * Helper structure holding the locations of the uniforms to transform matrices
@@ -139,14 +147,14 @@ GLuint g_sphere_vao;
 GLuint g_torus_vao;
 GLuint g_teapot_vao;
 
-GLint g_color_loc;	
-	
+GLint g_color_loc;
+
 Transformations g_tfm;
 Steps g_steps;
-WindowSize g_winSize;  
+WindowSize g_winSize;
 
-void init(void) 
-{	
+void init(void)
+{
   glClearColor (0.0, 0.0, 0.0, 0.0);
   glEnable( GL_DEPTH_TEST );
   errorOut();
@@ -154,7 +162,7 @@ void init(void)
   // Make sure that our shaders run
   int major, minor;
   getGlVersion( major, minor );
-  cerr << "Running OpenGL "<< major << "." << minor << endl; 
+  cerr << "Running OpenGL "<< major << "." << minor << endl;
   if ( major < 3 || (major==3 && minor<3)) {
     cerr << "No OpenGL 3.3 or higher" <<endl;
     exit(-1);
@@ -170,16 +178,16 @@ void init(void)
     sHandles.push_back( handle );
   }
   if ( !solar.load("solar.fs", GL_FRAGMENT_SHADER )) {
-    solar.installShader( handle, GL_FRAGMENT_SHADER ); 
+    solar.installShader( handle, GL_FRAGMENT_SHADER );
     Shader::compile( handle );
     sHandles.push_back( handle );
   }
   cerr << "No of handles: " << sHandles.size() << endl;
   GLuint program;
-  Shader::installProgram(sHandles, program); 
+  Shader::installProgram(sHandles, program);
   errorOut();
 
-  // Activate program in order to be able to set uniforms 
+  // Activate program in order to be able to set uniforms
   glUseProgram(program);
   errorOut();
 	// vertex attributes
@@ -187,50 +195,50 @@ void init(void)
   // find the locations of our uniforms and store them in a global structure for later access
   g_tfm.locMV = glGetUniformLocation( program, "ModelViewMatrix");
   g_tfm.locP = glGetUniformLocation( program, "ProjectionMatrix");
-	g_color_loc = glGetUniformLocation( program, "objColor");	
+	g_color_loc = glGetUniformLocation( program, "objColor");
   errorOut();
 
 //---------------------------------------------------------
   // Make the spheres nicer
-	// Warning: Number of points exponential? 
+	// Warning: Number of points exponential?
 	// Raise recursion level beyond 5 at own risk.
-  for (int i = 0; i < 3; ++i) {
+  for (int i = 0; i < 5; ++i) {
 	  g_sphereShape.subdivide();
   }
 
   // Make a funky torus
-  g_torusShape.reshape(2.0f, 0.5f, 25, 25);
+  g_torusShape.reshape(3.5f, 0.5f, 25, 25);
 
   // -------------------------------------------------------------
 	// Generate a VAO for the sphere
   glGenVertexArrays(1, &g_sphere_vao );
   glBindVertexArray( g_sphere_vao );
 
-  
+
   // Element array buffer object
-	GLuint g_ebo; 
+	GLuint g_ebo;
   glGenBuffers(1, &g_ebo);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ebo );
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
 	       sizeof(GLushort) * g_sphereShape.getNIndices(),
 							 g_sphereShape.getIndicies(), GL_STATIC_DRAW );
   errorOut();
-	
+
   GLuint vbo;
   glGenBuffers( 1, &vbo );
   errorOut();
   glBindBuffer(GL_ARRAY_BUFFER, vbo );
-  glBufferData(GL_ARRAY_BUFFER, 
+  glBufferData(GL_ARRAY_BUFFER,
 	       sizeof(GLfloat) * g_sphereShape.getNPoints(),
 							 g_sphereShape.getVertices(), GL_STATIC_DRAW);
 	errorOut();
   // pointer into the array of vertices which is now in the VAO
   glVertexAttribPointer(locPos, 3, GL_FLOAT, GL_FALSE, 0, 0 );
-  glEnableVertexAttribArray(locPos); 
+  glEnableVertexAttribArray(locPos);
   errorOut();
 
 	//---------------------------------------------------------
-	
+
 	// Generate a VAO for the torus
   glGenVertexArrays(1, &g_torus_vao );
   glBindVertexArray( g_torus_vao );
@@ -238,7 +246,7 @@ void init(void)
   // Element array buffer object
   glGenBuffers(1, &g_ebo);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ebo );
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
 	       sizeof(GLushort) * g_torusShape.getNIndices(),
 							 g_torusShape.getIndicies(), GL_STATIC_DRAW );
   errorOut();
@@ -246,16 +254,16 @@ void init(void)
   glGenBuffers( 1, &vbo );
   errorOut();
   glBindBuffer(GL_ARRAY_BUFFER, vbo );
-  glBufferData(GL_ARRAY_BUFFER, 
+  glBufferData(GL_ARRAY_BUFFER,
 	       sizeof(GLfloat) * 3 * g_torusShape.getNPoints(),
 							 g_torusShape.getVertices(), GL_STATIC_DRAW);
   // pointer into the array of vertices which is now in the VAO
   glVertexAttribPointer(locPos, 3, GL_FLOAT, GL_FALSE, 0, 0 );
-  glEnableVertexAttribArray(locPos); 
+  glEnableVertexAttribArray(locPos);
   errorOut();
 
 	//---------------------------------------------------------
-	
+
 	// Generate a VAO for the teapot
   glGenVertexArrays(1, &g_teapot_vao );
   glBindVertexArray( g_teapot_vao );
@@ -263,7 +271,7 @@ void init(void)
   // Element array buffer object
   glGenBuffers(1, &g_ebo);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ebo );
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
 	       sizeof(GLushort) * g_teapotShape.getNIndices(),
 							 g_teapotShape.getIndicies(), GL_STATIC_DRAW );
   errorOut();
@@ -271,18 +279,18 @@ void init(void)
   glGenBuffers( 1, &vbo );
   errorOut();
   glBindBuffer(GL_ARRAY_BUFFER, vbo );
-  glBufferData(GL_ARRAY_BUFFER, 
+  glBufferData(GL_ARRAY_BUFFER,
 	       sizeof(GLfloat) * 3 * g_teapotShape.getNPoints(),
 							 g_teapotShape.getVertices(), GL_STATIC_DRAW);
   // pointer into the array of vertices which is now in the VAO
   glVertexAttribPointer(locPos, 3, GL_FLOAT, GL_FALSE, 0, 0 );
-  glEnableVertexAttribArray(locPos); 
+  glEnableVertexAttribArray(locPos);
   errorOut();
 
 	//---------------------------------------------------------
-	
+
   // set the projection matrix with a uniform
-  glm::mat4 Projection = glm::ortho( -g_winSize.d_width/2.0f, g_winSize.d_width/2.0f, 
+  glm::mat4 Projection = glm::ortho( -g_winSize.d_width/2.0f, g_winSize.d_width/2.0f,
 				     -g_winSize.d_height/2.0f, g_winSize.d_height/2.0f,
 				     g_winSize.d_near, g_winSize.d_far );
   glUniformMatrix4fv(g_tfm.locP, 1, GL_FALSE, glm::value_ptr(Projection));
@@ -291,7 +299,7 @@ void init(void)
 
 
 void display(void)
-{	
+{
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
   // Set the modelview matrix to I
@@ -301,37 +309,37 @@ void display(void)
 
   // Move the orgin to the center of our viewing volume
   // Our viewing volume is from -near to -far, i.e.,
-  // we move our coordinate system to -(far-near)/2 
+  // we move our coordinate system to -(far-near)/2
   ModelView = glm::translate(ModelView, glm::vec3( 0, 0,-(g_winSize.d_far-g_winSize.d_near)/2.0f ));
- 
+
   // Sun is rotating around z in viewing coordinate system
   ModelView = glm::rotate(ModelView, glm::radians(g_steps.getRotSun()), glm::vec3(0, 0, 1.0f ));
   // Update uniform for this drawing
   glUniformMatrix4fv(g_tfm.locMV, 1, GL_FALSE, glm::value_ptr(ModelView));
-  // draw sun 
+  // draw sun
   glUniform3f(g_color_loc, 1.0f, 1.0f, 0.0f); // Sun's color
   // Sphere of radius 1
   glBindVertexArray(g_sphere_vao);
   glDrawElements(GL_TRIANGLES, g_sphereShape.getNIndices(),
-		 GL_UNSIGNED_SHORT, 0);	
+		 GL_UNSIGNED_SHORT, 0);
   errorOut();
   // save matrix state -- to get back to sun
   // Use std::stack to keep push and pop from fixed pipeline
   std::stack<glm::mat4>  ModelViewStack;
   ModelViewStack.push(ModelView);
-  
+
   // Object transform:
-  // Scale the planet to 1/3, translate away in x and then 
+  // Scale the planet to 1/3, translate away in x and then
   // rotate the planet around y in the sun's coordinate system
   // Frame transform in reverse: (move the sun's to the planet's coordinate system)
   // Rotate the sun frame around its y axis
-  // translate in the direction of the new x and finally reduce the axis to 1/3 to make the planet size 1 
+  // translate in the direction of the new x and finally reduce the axis to 1/3 to make the planet size 1
   ModelView = glm::rotate(ModelView, glm::radians(g_steps.getRotPlanet(0)), glm::vec3(0, 1.0f, 0 ));
-  ModelView = glm::translate(ModelView, glm::vec3( 3.0f, 0.0f, 0.0f));  
+  ModelView = glm::translate(ModelView, glm::vec3( 3.0f, 0.0f, 0.0f));
   ModelView = glm::scale(ModelView, glm::vec3( 0.33f, 0.33f, 0.33f));
   // Update uniform for this drawing
   glUniformMatrix4fv(g_tfm.locMV, 1, GL_FALSE, glm::value_ptr(ModelView));
-  glUniform3f(g_color_loc, 0.0f, 0.0f, 0.9f); // blue planet 
+  glUniform3f(g_color_loc, 0.0f, 0.0f, 0.9f); // blue planet
   glBindVertexArray(g_sphere_vao);
   glDrawElements(GL_TRIANGLES, g_sphereShape.getNIndices(),
 		 GL_UNSIGNED_SHORT, 0);
@@ -343,7 +351,7 @@ void display(void)
   // Rotate in reverse around around y of the planet coordinates
   // Rotate in reverse around the new z to compensate for the sun rotation
   // Translate up to get on top of the planet
-  // Scale 1/3 to make the teapot height the same as the radius of the planet 
+  // Scale 1/3 to make the teapot height the same as the radius of the planet
   ModelView = glm::rotate(ModelView, glm::radians(-g_steps.getRotPlanet(0)), glm::vec3(0, 1.0f, 0 ));
   ModelView = glm::rotate(ModelView, glm::radians(-g_steps.getRotSun()), glm::vec3(0, 0, 1.0f ));
   ModelView = glm::translate(ModelView, glm::vec3(0.0f,1.0f,0.0f));
@@ -384,7 +392,7 @@ void display(void)
   ModelViewStack.push(ModelView); // save ring's rotation coordinate system
 
   // stretch the ring in x and z, and squish it in y
-  ModelView = glm::scale(ModelView, glm::vec3(1.8f, 0.5f, 1.8f));
+  //ModelView = glm::scale(ModelView, glm::vec3(1.8f, 0.5f, 1.8f));
 
   // Update uniform for this drawing
   glUniformMatrix4fv(g_tfm.locMV, 1, GL_FALSE, glm::value_ptr(ModelView));
@@ -403,7 +411,7 @@ void display(void)
   // Move the frame out to a bit beyond the ring
   // Scale the frame to 0.1 of saturn's frame
   ModelView = glm::rotate(ModelView, glm::radians(15.0f), glm::vec3(0, 0, 1.0f));
-  ModelView = glm::translate(ModelView, glm::vec3( 2.0f, 0.0f, 0.0f )); 
+  ModelView = glm::translate(ModelView, glm::vec3( 2.0f, 0.0f, 0.0f ));
 
   ModelView = glm::scale(ModelView, glm::vec3(0.1f, 0.1f, 0.1f));
   // Update uniform for this drawing
@@ -431,14 +439,14 @@ void solarReshape( GLsizei _width, GLsizei _height ) {
     g_winSize.d_width = minDim;
     g_winSize.d_height = minDim * (GLfloat)_height/(GLfloat)_width;
   }
-  glm::mat4 Projection = glm::ortho( -g_winSize.d_width/2.0f, g_winSize.d_width/2.0f, 
+  glm::mat4 Projection = glm::ortho( -g_winSize.d_width/2.0f, g_winSize.d_width/2.0f,
 				     -g_winSize.d_height/2.0f, g_winSize.d_height/2.0f,
-				     g_winSize.d_near, g_winSize.d_far ); 
+				     g_winSize.d_near, g_winSize.d_far );
   glUniformMatrix4fv(g_tfm.locP, 1, GL_FALSE, glm::value_ptr(Projection));
   g_winSize.d_widthPixel = _width;
   g_winSize.d_heightPixel = _height;
   // reshape our viewport
-  glViewport( 0, 0, 
+  glViewport( 0, 0,
 	      g_winSize.d_widthPixel,
 	      g_winSize.d_heightPixel );
 }
@@ -473,9 +481,18 @@ void idleFunc(void)
 
 int main(int argc, char** argv)
 {
+  #ifdef JOELAPTOP
+// annoying version stuff
+glewExperimental = GL_TRUE;
+cerr << "Set GLEW Experimental Version" <<endl;
+errorOut();
+cerr << "Specity Context Version: 4,5"<<endl;
+glutInitContextVersion(4,5);
+errorOut();
+  #endif
    glutInit(&argc, argv);
    glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-   glutInitWindowSize (800, 600); 
+   glutInitWindowSize (800, 600);
    glutInitWindowPosition (0, 0);
    glutCreateWindow (argv[0]);
    GLenum err = glewInit();
@@ -489,10 +506,9 @@ int main(int argc, char** argv)
    init();
    cerr << "After init" << endl;
    glutReshapeFunc(solarReshape);
-   glutDisplayFunc(display); 
+   glutDisplayFunc(display);
    glutKeyboardFunc(keyboard);
    glutIdleFunc(idleFunc);
    glutMainLoop();
    return 0;
 }
-
